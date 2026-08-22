@@ -589,7 +589,7 @@
         supabase.from('campus_prayer_times').select('*').eq('msa_id', msa.id),
         supabase.from('campus_jummah').select('*').eq('msa_id', msa.id).eq('is_active', true).order('position'),
         supabase.from('campus_prayer_spaces').select('*').eq('msa_id', msa.id).eq('is_active', true),
-        supabase.from('campus_events').select('*').eq('msa_id', msa.id).eq('is_published', true).or(`event_start.gte.${new Date().toISOString()},event_start.is.null`).order('event_start', { nullsFirst: false }).limit(6),
+        supabase.from('campus_events').select('*').eq('msa_id', msa.id).eq('is_published', true).gte('event_start', new Date().toISOString()).order('event_start').limit(6),
         supabase.from('campus_announcements').select('*').eq('msa_id', msa.id).eq('is_published', true).order('created_at', { ascending: false }).limit(4),
         supabase.from('campus_resources').select('*').eq('msa_id', msa.id).eq('is_active', true).order('position'),
         supabase.from('campus_dining_updates').select('*').eq('msa_id', msa.id).eq('is_published', true).eq('date', todayISO).order('created_at', { ascending: false }),
