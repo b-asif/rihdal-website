@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request MSA Access — Rihdal</title>
+  <meta name="description" content="Apply to manage your campus MSA page on Rihdal." />
+  <link rel="icon" href="../../icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --green: #1F3D2B;
+      --green-mid: #245737;
+      --cream: #F7F2E7;
+      --cream-dim: #EDE8DC;
+      --gold: #B08D57;
+      --gold-accent: #C5A059;
+      --gold-accent-bg: #FDF6E8;
+      --sage: #E8F0EC;
+      --sage-border: #C8DDD0;
+      --text: #20241F;
+      --muted: #8C8776;
+      --line: #EAE3D3;
+      --red: #C0392B;
+      --font-display: 'Outfit', sans-serif;
+      --font-ui: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--cream);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 48px;
+      background: var(--green);
+    }
+
+    .nav-word {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(247, 242, 231, 0.9);
+      text-decoration: none;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(247, 242, 231, 0.5);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: rgba(247, 242, 231, 0.9);
+    }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--cream);
+      text-decoration: none;
+      padding: 9px 20px;
+      border-radius: 50px;
+      transition: opacity 0.2s;
+    }
+
+    .nav-cta:hover {
+      opacity: 0.85;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--green);
+      padding: 110px 24px 48px;
+      text-align: center;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-accent);
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 800;
+      color: var(--cream);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .hero-sub {
+      font-size: 15px;
+      color: rgba(247, 242, 231, 0.6);
+      max-width: 420px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Steps indicator ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--line);
+      transition: background 0.25s;
+    }
+
+    .step-dot.active {
+      background: var(--green);
+    }
+
+    .step-dot.done {
+      background: var(--gold-accent);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      padding: 32px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* ── Form elements ── */
+    .form-field {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 7px;
+    }
+
+    .form-label span {
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      background: var(--cream);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--green);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+
+    .form-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8776' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+      cursor: pointer;
+    }
+
+    /* University search combo */
+    .uni-combo {
+      position: relative;
+    }
+
+    .uni-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: #fff;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .uni-dropdown.open {
+      display: block;
+    }
+
+    .uni-opt {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .uni-opt:last-child {
+      border-bottom: none;
+    }
+
+    .uni-opt:hover,
+    .uni-opt.highlighted {
+      background: var(--sage);
+    }
+
+    .uni-opt.not-listed {
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    /* Role chips */
+    .role-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .role-chip {
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 7px 14px;
+      border-radius: 50px;
+      border: 1.5px solid var(--line);
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .role-chip.selected {
+      border-color: var(--green);
+      background: var(--sage);
+      color: var(--green);
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      opacity: 0.85;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--green);
+      border: 1.5px solid var(--line);
+      margin-top: 10px;
+    }
+
+    /* ── Error / info banners ── */
+    .banner {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .banner-error {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: var(--red);
+    }
+
+    .banner-info {
+      background: var(--gold-accent-bg);
+      border: 1px solid #E5C98A;
+      color: #7A5520;
+    }
+
+    .banner-success {
+      background: var(--sage);
+      border: 1px solid var(--sage-border);
+      color: var(--green);
+    }
+
+    /* ── Success state ── */
+    .success-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .success-body {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── What happens next ── */
+    .next-steps {
+      margin-top: 24px;
+      padding: 18px 20px;
+      background: var(--cream);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+
+    .next-steps-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    .next-step {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .next-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .next-step-num {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--green);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--green);
+      padding: 40px 48px;
+    }
+
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-word {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(247, 242, 231, 0.4);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 28px;
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: rgba(247, 242, 231, 0.35);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: rgba(247, 242, 231, 0.6);
+    }
+
+    .footer-copy {
+      font-size: 12px;
+      color: rgba(247, 242, 231, 0.25);
+    }
+
+    @media (max-width: 640px) {
+      nav {
+        padding: 18px 24px;
+      }
+
+      .nav-link {
+        display: none;
+      }
+
+      footer {
+        padding: 40px 24px;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card {
+        padding: 24px 20px;
+      }
+    }
+
+    /* ── Mobile hamburger & drawer ─────────────────────────────── */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .nav-hamburger span {
+      display: block;
+      height: 1.5px;
+      background: rgba(247,242,231,0.75);
+      border-radius: 2px;
+      transition: transform 0.28s ease, opacity 0.2s ease, width 0.2s ease;
+      transform-origin: right center;
+    }
+    .nav-hamburger span:nth-child(1) { width: 22px; }
+    .nav-hamburger span:nth-child(2) { width: 14px; }
+    .nav-hamburger span:nth-child(3) { width: 22px; }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(-45deg); width: 22px; }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(45deg); width: 22px; }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      background: var(--green);
+      overflow-y: auto;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      pointer-events: none;
+    }
+    .mobile-menu.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .mobile-nav {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: 100px 32px 52px;
+    }
+    .mobile-links { flex: 1; }
+    .mobile-link {
+      display: block;
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(247,242,231,0.4);
+      text-decoration: none;
+      padding: 17px 0;
+      border-bottom: 1px solid rgba(247,242,231,0.07);
+      letter-spacing: -0.01em;
+      transition: color 0.15s ease, padding-left 0.15s ease;
+    }
+    .mobile-link:first-child { border-top: 1px solid rgba(247,242,231,0.07); }
+    .mobile-link:hover, .mobile-link:active {
+      color: rgba(247,242,231,0.9);
+      padding-left: 6px;
+    }
+    .mobile-bottom {
+      margin-top: 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .mobile-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.6;
+    }
+    .mobile-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: var(--cream);
+      color: var(--green);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 16px 24px;
+      border-radius: 50px;
+      transition: opacity 0.2s;
+    }
+    .mobile-cta:hover { opacity: 0.88; }
+
+    @media (max-width: 768px) {
+      .nav-cta       { display: none; }
+      .nav-hamburger { display: flex; }
+      .mobile-menu   { display: block; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="../../" class="nav-word">Rihdal</a>
+    <div class="nav-right">
+      <a href="../../guides.html" class="nav-link">Guides</a>
+      <a href="../../campus/" class="nav-link active">Campus Hub</a>
+      <a href="../../partners.html" class="nav-link">Partner with us</a>
+      <a href="https://apps.apple.com/us/app/rihdal/id6767651676" target="_blank" rel="noopener noreferrer" class="nav-cta">Download</a>
+      <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false" onclick="toggleMenu(this)">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <p class="hero-label">MSA Admin Portal</p>
+    <h1 class="hero-title">Request Access for Your MSA</h1>
+    <p class="hero-sub">Claim your campus page and start managing prayer times, events, and announcements.</p>
+  </div>
+
+  <main>
+    <!-- Step indicator -->
+    <div class="steps" id="steps">
+      <div class="step-dot active" id="dot-0"></div>
+      <div class="step-dot" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+    </div>
+
+    <!-- ── Step 0: Create account ── -->
+    <div id="step-email">
+
+      <!-- Sign-up mode -->
+      <div id="email-signup" class="card">
+        <p class="card-title">Create your Rihdal account</p>
+        <p class="card-sub">Use your university or MSA email for faster approval.</p>
+
+        <div class="banner banner-error" id="email-error"></div>
+
+        <div class="form-field">
+          <label class="form-label" for="input-email">Email address</label>
+          <input class="form-input" id="input-email" type="email" placeholder="you@university.edu"
+            autocomplete="email" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="input-password">Password</label>
+          <input class="form-input" id="input-password" type="password" placeholder="Choose a password"
+            autocomplete="new-password" />
+        </div>
+
+        <button class="btn btn-green" id="btn-send-link">Create Account</button>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:12px;">
+          Already have an account? <a href="#" id="btn-show-signin" style="color:var(--green);">Sign in →</a>
+        </p>
+      </div>
+
+      <!-- Sign-in mode -->
+      <div id="email-signin" class="card" style="display:none;">
+        <p class="card-title">Sign in to your account</p>
+        <p class="card-sub">Sign in and we'll continue with your MSA request.</p>
+
+        <div class="banner banner-error" id="signin-error"></div>
+
+        <div class="form-field">
+          <label class="form-label" for="signin-email">Email address</label>
+          <input class="form-input" id="signin-email" type="email" placeholder="you@university.edu"
+            autocomplete="email" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="signin-password">Password</label>
+          <input class="form-input" id="signin-password" type="password" placeholder="Your password"
+            autocomplete="current-password" />
+        </div>
+
+        <button class="btn btn-green" id="btn-signin">Sign In</button>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:12px;">
+          New to Rihdal? <a href="#" id="btn-show-signup" style="color:var(--green);">Create an account →</a>
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ── Step 1: Create account ── -->
+    <div id="step-profile" style="display:none;">
+      <div class="card">
+        <p class="card-title">Create your account</p>
+        <p class="card-sub">You're almost in. Tell us your name so we know who's managing the page.</p>
+
+        <div class="banner banner-error" id="profile-error"></div>
+
+        <div class="form-field">
+          <label class="form-label" for="input-name">Your full name</label>
+          <input class="form-input" id="input-name" type="text" placeholder="Fatima Al-Hassan" autocomplete="name" />
+        </div>
+
+        <button class="btn btn-green" id="btn-save-profile">Continue</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Application form ── -->
+    <div id="step-form" style="display:none;">
+      <div class="card">
+        <p class="card-title">Tell us about your MSA</p>
+        <p class="card-sub">Signed in as <strong id="form-email-display"></strong> · <a href="#" id="btn-signout"
+            style="color:var(--muted);font-size:12px;">Sign out</a></p>
+
+        <div class="banner banner-error" id="form-error"></div>
+
+        <!-- University -->
+        <div class="form-field">
+          <label class="form-label" for="input-uni">University</label>
+          <div class="uni-combo">
+            <input class="form-input" id="input-uni" type="text" placeholder="Search your university…"
+              autocomplete="off" />
+            <div class="uni-dropdown" id="uni-dropdown"></div>
+            <input type="hidden" id="uni-id" />
+          </div>
+        </div>
+
+        <!-- MSA name -->
+        <div class="form-field">
+          <label class="form-label" for="input-msa-name">MSA name <span>(as it should appear on the page)</span></label>
+          <input class="form-input" id="input-msa-name" type="text"
+            placeholder="e.g. Muslim Students Association at Michigan" />
+        </div>
+
+        <!-- Role -->
+        <div class="form-field">
+          <label class="form-label">Your role</label>
+          <div class="role-chips" id="role-chips">
+            <button type="button" class="role-chip" data-role="President">President</button>
+            <button type="button" class="role-chip" data-role="Vice President">Vice President</button>
+            <button type="button" class="role-chip" data-role="Secretary">Secretary</button>
+            <button type="button" class="role-chip" data-role="Officer">Officer</button>
+            <button type="button" class="role-chip" data-role="Advisor">Advisor</button>
+          </div>
+          <input class="form-input" id="input-role-other" type="text" placeholder="Or type your role…"
+            style="margin-top:10px;" />
+        </div>
+
+        <div class="divider">Contact info</div>
+
+        <!-- Contact email -->
+        <div class="form-field">
+          <label class="form-label" for="input-contact-email">Contact email <span>(for us to reach you)</span></label>
+          <input class="form-input" id="input-contact-email" type="email" placeholder="msa@university.edu" />
+        </div>
+
+        <!-- Instagram -->
+        <div class="form-field">
+          <label class="form-label" for="input-instagram">MSA Instagram <span>(optional)</span></label>
+          <input class="form-input" id="input-instagram" type="text" placeholder="@umich.msa" />
+        </div>
+
+        <!-- Message -->
+        <div class="form-field">
+          <label class="form-label" for="input-message">Anything else? <span>(optional)</span></label>
+          <textarea class="form-textarea" id="input-message"
+            placeholder="Tell us a bit about your MSA, upcoming events, or how students can get involved…"></textarea>
+        </div>
+
+        <button class="btn btn-green" id="btn-submit">Submit Request</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Success ── -->
+    <div id="step-success" style="display:none;">
+      <div class="card">
+        <div class="success-icon">
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="36" cy="36" r="36" fill="#E8F0EC"/>
+            <!-- Crescent moon (Lucide-style) -->
+            <path d="M38 22a10 10 0 0 0 12 12 14 14 0 1 1-12-12Z" fill="#1F3D2B"/>
+          </svg>
+        </div>
+        <p class="success-title">Request submitted!</p>
+        <p class="success-body">JazakAllah khayran. We'll review your request and reach out within 1–2 business days.
+        </p>
+
+        <div class="next-steps" style="margin-top:28px;">
+          <div class="next-steps-title">What happens next</div>
+          <div class="next-step">
+            <div class="next-step-num">1</div>
+            <div>Our team reviews your request and verifies your MSA officer status.</div>
+          </div>
+          <div class="next-step">
+            <div class="next-step-num">2</div>
+            <div>We send you a claim code via email (or Instagram DM if you provided it).</div>
+          </div>
+          <div class="next-step">
+            <div class="next-step-num">3</div>
+            <div>Enter the code in the Rihdal app or MSA Admin Portal to activate your page.</div>
+          </div>
+        </div>
+
+        <a href="../" class="btn btn-outline" style="display:block;margin-top:20px;text-align:center;">← Back to Campus
+          Hub</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-word">Rihdal</span>
+      <div class="footer-links">
+        <a href="../../privacy.html" class="footer-link">Privacy Policy</a>
+        <a href="../../terms.html" class="footer-link">Terms of Service</a>
+        <a href="mailto:support@rihdal.com" class="footer-link">Contact</a>
+      </div>
+      <span class="footer-copy">&copy; 2026 Rihdal</span>
+    </div>
+  </footer>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <nav class="mobile-nav">
+      <div class="mobile-links">
+        <a href="../../index.html" class="mobile-link">Home</a>
+        <a href="../../guides.html" class="mobile-link">Guides</a>
+        <a href="../../for-restaurants.html" class="mobile-link">For Restaurants</a>
+        <a href="../../for-mosques.html" class="mobile-link">For Mosques</a>
+        <a href="../../partners.html" class="mobile-link">Partner with us</a>
+      </div>
+      <div class="mobile-bottom">
+        <p class="mobile-eyebrow">Guide Your Journey</p>
+        <a href="https://apps.apple.com/us/app/rihdal/id6767651676" target="_blank" rel="noopener noreferrer" class="mobile-cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Download on the App Store
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    function toggleMenu(btn) {
+      const menu = document.getElementById('mobileMenu');
+      const open = menu.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+    // Close on nav link tap
+    document.querySelectorAll('.mobile-link, .mobile-cta').forEach(el => {
+      el.addEventListener('click', () => {
+        const menu = document.getElementById('mobileMenu');
+        const btn  = document.querySelector('.nav-hamburger');
+        menu.classList.remove('open');
+        btn && btn.classList.remove('open');
+        btn && btn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      });
+    });
+  </script>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const sb = createClient(
+      'https://alalaxezygrhxalssxfi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsYWxheGV6eWdyaHhhbHNzeGZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzYxMzcsImV4cCI6MjA5MjU1MjEzN30.HFRc9ez6JjNUvCtl9oc99X4f00pbdtjoOoSJ2IwJ21g'
+    );
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let currentUser = null;
+    let profileName = '';
+    let selectedRole = '';
+    let uniList = [];
+    let selectedUniId = null;
+    let selectedUniName = '';
+    let uniDebounce = null;
+
+    // ── Elements ────────────────────────────────────────────────────────────────
+    const stepEmail   = document.getElementById('step-email');
+    const stepProfile = document.getElementById('step-profile');
+    const stepForm    = document.getElementById('step-form');
+    const stepSuccess = document.getElementById('step-success');
+
+    const dot0 = document.getElementById('dot-0');
+    const dot1 = document.getElementById('dot-1');
+    const dot2 = document.getElementById('dot-2');
+
+    // ── Utility ─────────────────────────────────────────────────────────────────
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showBanner(id, msg, type = 'error') {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = msg;
+      el.className = `banner banner-${type} show`;
+    }
+    function hideBanner(id) {
+      const el = document.getElementById(id);
+      if (el) { el.className = 'banner'; el.innerHTML = ''; }
+    }
+
+    function setStep(step) {
+      stepEmail.style.display   = step === 'email'   ? '' : 'none';
+      stepProfile.style.display = step === 'profile' ? '' : 'none';
+      stepForm.style.display    = step === 'form'    ? '' : 'none';
+      stepSuccess.style.display = step === 'success' ? '' : 'none';
+
+      dot0.className = 'step-dot' + (step === 'email' ? ' active' : ' done');
+      dot1.className = 'step-dot' + (step === 'profile' ? ' active' : step === 'form' || step === 'success' ? ' done' : '');
+      dot2.className = 'step-dot' + (step === 'form' ? ' active' : step === 'success' ? ' done' : '');
+
+      // Hide step indicator on success
+      document.getElementById('steps').style.display = step === 'success' ? 'none' : '';
+
+      if (step === 'profile') setTimeout(() => document.getElementById('input-name')?.focus(), 50);
+    }
+
+    // ── Auth state ──────────────────────────────────────────────────────────────
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        currentUser = session.user;
+        await showForm(session.user);
+      } else {
+        currentUser = null;
+        // Only go back to email step if not on success
+        if (stepSuccess.style.display === 'none') setStep('email');
+      }
+    });
+
+    // Check immediately (handles magic link hash on page load)
+    const { data: { session: initSession } } = await sb.auth.getSession();
+    if (initSession?.user) {
+      currentUser = initSession.user;
+      await showForm(initSession.user);
+    } else {
+      // Pre-fill university from ?university= param (set by detail.html link)
+      const params = new URLSearchParams(location.search);
+      const uniSlug = params.get('university');
+      if (uniSlug) {
+        const { data } = await sb.from('universities').select('id, name').eq('slug', uniSlug).maybeSingle();
+        if (data) {
+          document.getElementById('input-uni').value = data.name;
+          document.getElementById('uni-id').value = data.id;
+          selectedUniId = data.id;
+          selectedUniName = data.name;
+          // Pre-fill MSA name hint
+          document.getElementById('input-msa-name').placeholder = `e.g. MSA at ${data.name}`;
+        }
+      }
+      setStep('email');
+    }
+
+    async function showForm(user) {
+      document.getElementById('form-email-display').textContent = user.email;
+      document.getElementById('input-contact-email').value = user.email;
+      await loadUniversities();
+
+      // Check if they already have a profile name
+      const { data: profile } = await sb.from('profiles').select('name').eq('id', user.id).maybeSingle();
+      if (profile?.name) {
+        profileName = profile.name;
+        setStep('form');
+      } else {
+        setStep('profile');
+      }
+    }
+
+    // ── Step 1: Save profile name ────────────────────────────────────────────────
+    document.getElementById('input-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-save-profile').click();
+    });
+
+    document.getElementById('btn-save-profile').addEventListener('click', async () => {
+      const name = document.getElementById('input-name').value.trim();
+      if (!name) { showBanner('profile-error', 'Please enter your name.'); return; }
+      hideBanner('profile-error');
+      const btn = document.getElementById('btn-save-profile');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const { error } = await sb.from('profiles').upsert({ id: currentUser.id, name });
+      btn.disabled = false; btn.textContent = 'Continue';
+      if (error) { showBanner('profile-error', error.message); return; }
+      profileName = name;
+      setStep('form');
+    });
+
+    // ── Step 0: Toggle signup ↔ signin modes ────────────────────────────────────
+    function showEmailMode(mode) {
+      document.getElementById('email-signup').style.display = mode === 'signup' ? '' : 'none';
+      document.getElementById('email-signin').style.display = mode === 'signin' ? '' : 'none';
+      hideBanner('email-error');
+      hideBanner('signin-error');
+      if (mode === 'signin') setTimeout(() => document.getElementById('signin-email').focus(), 50);
+      else setTimeout(() => document.getElementById('input-email').focus(), 50);
+    }
+
+    document.getElementById('btn-show-signin').addEventListener('click', e => {
+      e.preventDefault();
+      // Pre-fill sign-in email from signup field if already typed
+      const existing = document.getElementById('input-email').value.trim();
+      if (existing) document.getElementById('signin-email').value = existing;
+      showEmailMode('signin');
+    });
+
+    document.getElementById('btn-show-signup').addEventListener('click', e => {
+      e.preventDefault();
+      showEmailMode('signup');
+    });
+
+    // ── Step 0: Create account ──────────────────────────────────────────────────
+    document.getElementById('btn-send-link').addEventListener('click', async () => {
+      const email    = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value;
+      hideBanner('email-error');
+      if (!email || !email.includes('@')) { showBanner('email-error', 'Please enter a valid email address.'); return; }
+      if (password.length < 6) { showBanner('email-error', 'Password must be at least 6 characters.'); return; }
+      const btn = document.getElementById('btn-send-link');
+      btn.disabled = true; btn.textContent = 'Creating account…';
+      const { error } = await sb.auth.signUp({ email, password });
+      btn.disabled = false; btn.textContent = 'Create Account';
+      if (error) {
+        if (error.status === 422 || error.message?.toLowerCase().includes('already registered')) {
+          showBanner('email-error', 'An account with this email already exists. <a href="#" onclick="event.preventDefault();document.getElementById(\'btn-show-signin\').click();" style="color:var(--red);font-weight:700;">Sign in instead →</a>');
+        } else {
+          showBanner('email-error', error.message);
+        }
+        return;
+      }
+      // onAuthStateChange fires on success → showForm(user) → profile step
+    });
+
+    document.getElementById('input-email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('input-password').focus();
+    });
+    document.getElementById('input-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-send-link').click();
+    });
+
+    // ── Step 0: Sign in to existing account ─────────────────────────────────────
+    document.getElementById('btn-signin').addEventListener('click', async () => {
+      const email = document.getElementById('signin-email').value.trim();
+      const pw    = document.getElementById('signin-password').value;
+      hideBanner('signin-error');
+      if (!email || !email.includes('@')) { showBanner('signin-error', 'Please enter a valid email address.'); return; }
+      if (!pw) { showBanner('signin-error', 'Please enter your password.'); return; }
+      const btn = document.getElementById('btn-signin');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      btn.disabled = false; btn.textContent = 'Sign In';
+      if (error) { showBanner('signin-error', error.message); return; }
+      // onAuthStateChange fires → showForm(user) → continues MSA request flow
+    });
+
+    document.getElementById('signin-email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('signin-password').focus();
+    });
+    document.getElementById('signin-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-signin').click();
+    });
+
+    // ── Sign out ────────────────────────────────────────────────────────────────
+    document.getElementById('btn-signout').addEventListener('click', async e => {
+      e.preventDefault();
+      await sb.auth.signOut();
+      setStep('email');
+    });
+
+    // ── University search ───────────────────────────────────────────────────────
+    async function loadUniversities() {
+      const { data } = await sb.from('universities').select('id, name, city, state').order('name').limit(300);
+      uniList = data ?? [];
+    }
+
+    const uniInput = document.getElementById('input-uni');
+    const uniDropdown = document.getElementById('uni-dropdown');
+    const uniIdInput = document.getElementById('uni-id');
+
+    uniInput.addEventListener('input', () => {
+      clearTimeout(uniDebounce);
+      uniIdInput.value = '';
+      selectedUniId = null;
+      selectedUniName = uniInput.value.trim();
+      uniDebounce = setTimeout(() => renderUniDropdown(uniInput.value.trim()), 150);
+    });
+
+    uniInput.addEventListener('focus', () => {
+      if (uniInput.value.trim()) renderUniDropdown(uniInput.value.trim());
+    });
+
+    document.addEventListener('click', e => {
+      if (!uniInput.contains(e.target) && !uniDropdown.contains(e.target)) {
+        uniDropdown.classList.remove('open');
+      }
+    });
+
+    function renderUniDropdown(q) {
+      const lower = q.toLowerCase();
+      const matches = q
+        ? uniList.filter(u => u.name.toLowerCase().includes(lower)).slice(0, 8)
+        : [];
+
+      if (!q) { uniDropdown.classList.remove('open'); return; }
+
+      const exactMatch = uniList.some(u => u.name.toLowerCase() === lower);
+
+      let html = matches.map(u => {
+        const loc = [u.city, u.state].filter(Boolean).join(', ');
+        return `<div class="uni-opt" data-id="${esc(u.id)}" data-name="${esc(u.name)}">
+          <div style="font-weight:600;">${esc(u.name)}</div>
+          ${loc ? `<div style="font-size:11px;color:var(--muted);">${esc(loc)}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      if (!exactMatch) {
+        html += `<div class="uni-opt not-listed" data-id="" data-name="${esc(q)}">My university isn't listed — use "${esc(q)}"</div>`;
+      }
+
+      uniDropdown.innerHTML = html;
+      uniDropdown.classList.add('open');
+
+      uniDropdown.querySelectorAll('.uni-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+          selectedUniId = opt.dataset.id || null;
+          selectedUniName = opt.dataset.name;
+          uniInput.value = selectedUniName;
+          uniIdInput.value = selectedUniId ?? '';
+          uniDropdown.classList.remove('open');
+          // Update MSA name placeholder
+          document.getElementById('input-msa-name').placeholder = `e.g. MSA at ${selectedUniName}`;
+        });
+      });
+    }
+
+    // ── Role chips ───────────────────────────────────────────────────────────────
+    document.getElementById('role-chips').addEventListener('click', e => {
+      const chip = e.target.closest('.role-chip');
+      if (!chip) return;
+      document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedRole = chip.dataset.role;
+      document.getElementById('input-role-other').value = '';
+    });
+
+    document.getElementById('input-role-other').addEventListener('input', () => {
+      document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('selected'));
+      selectedRole = document.getElementById('input-role-other').value.trim();
+    });
+
+    // ── Submit ───────────────────────────────────────────────────────────────────
+    document.getElementById('btn-submit').addEventListener('click', async () => {
+      hideBanner('form-error');
+
+      const uniName = selectedUniName || uniInput.value.trim();
+      const msaName = document.getElementById('input-msa-name').value.trim();
+      const role = selectedRole || document.getElementById('input-role-other').value.trim();
+      const contactEmail = document.getElementById('input-contact-email').value.trim();
+      const instagram = document.getElementById('input-instagram').value.trim().replace(/^@/, '');
+      const message = document.getElementById('input-message').value.trim();
+
+      // Validation
+      if (!uniName) { showBanner('form-error', 'Please enter your university name.'); return; }
+      if (!msaName) { showBanner('form-error', 'Please enter your MSA name.'); return; }
+      if (!role) { showBanner('form-error', 'Please select or enter your role in the MSA.'); return; }
+      if (!contactEmail || !contactEmail.includes('@')) { showBanner('form-error', 'Please enter a valid contact email.'); return; }
+
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true; btn.textContent = 'Submitting…';
+
+      // Build message with name + role prepended
+      const fullMessage = [`Name: ${profileName}`, `Role: ${role}`, message].filter(Boolean).join('\n\n');
+
+      const payload = {
+        user_id: currentUser.id,
+        proposed_msa_name: msaName,
+        contact_email: contactEmail,
+        contact_instagram: instagram || null,
+        message: fullMessage,
+        status: 'pending',
+      };
+
+      if (selectedUniId) {
+        payload.university_id = selectedUniId;
+      } else {
+        payload.proposed_university_name = uniName;
+      }
+
+      const { error } = await sb.from('msa_onboarding_requests').insert(payload);
+
+      btn.disabled = false; btn.textContent = 'Submit Request';
+
+      if (error) {
+        // Duplicate request
+        if (error.code === '23505') {
+          showBanner('form-error', 'You already have a pending request. Our team will be in touch soon.');
+        } else {
+          showBanner('form-error', error.message);
+        }
+        return;
+      }
+
+      setStep('success');
+    });
+  </script>
+
+</body>
+
+</html>

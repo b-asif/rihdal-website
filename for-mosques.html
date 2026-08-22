@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>List Your Mosque — Rihdal</title>
+  <meta name="description" content="List your mosque on Rihdal and reach Muslims searching nearby. Free, verified, and takes minutes." />
+  <link rel="icon" href="icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:      #1F3D2B;
+      --green-mid:  #245737;
+      --cream:      #F7F2E7;
+      --cream-dim:  #EDE8DC;
+      --gold:       #B08D57;
+      --text:       #20241F;
+      --muted:      #8C8776;
+      --line:       #EAE3D3;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 48px;
+      transition: background 0.25s ease, padding 0.25s ease;
+    }
+    nav.scrolled {
+      background: var(--green);
+      padding-top: 16px;
+      padding-bottom: 16px;
+    }
+
+    .nav-word {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(247,242,231,0.9);
+      text-decoration: none;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(247,242,231,0.5);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: rgba(247,242,231,0.9); }
+    .nav-link.active { color: rgba(247,242,231,0.9); }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--cream);
+      text-decoration: none;
+      padding: 9px 20px;
+      border-radius: 50px;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── Page Hero ────────────────────────────────────────────── */
+    .page-hero {
+      background: var(--green);
+      padding: 160px 24px 88px;
+    }
+
+    .hero-inner {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(247,242,231,0.35);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: rgba(247,242,231,0.65); }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-size: clamp(32px, 5.5vw, 52px);
+      font-weight: 800;
+      color: var(--cream);
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .page-sub {
+      font-size: 16px;
+      color: rgba(247,242,231,0.55);
+      line-height: 1.7;
+      max-width: 480px;
+    }
+
+    /* ── Form Section ─────────────────────────────────────────── */
+    .form-section {
+      background: var(--cream);
+      padding: 88px 24px 112px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .form-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    /* Benefits column */
+    .benefits-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .benefits-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 32px;
+    }
+
+    .benefit-list {
+      list-style: none;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .benefit-item:first-child { border-top: 1px solid var(--line); }
+
+    .benefit-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .benefit-text {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .benefit-text strong {
+      display: block;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    /* Form card */
+    .form-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 44px 40px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .form-label .optional {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: rgba(140,135,118,0.6);
+      font-size: 11px;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: #FDFCF9;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(31,61,43,0.06);
+    }
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: rgba(140,135,118,0.5);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.6;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 28px 0;
+    }
+
+    .btn-submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--green);
+      color: var(--cream);
+      padding: 16px 28px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.01em;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .form-note {
+      font-size: 12px;
+      color: rgba(140,135,118,0.7);
+      text-align: center;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      background: #131510;
+      padding: 48px 48px;
+    }
+
+    .footer-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-word {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(247,242,231,0.22);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: rgba(247,242,231,0.28);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-link:hover { color: rgba(247,242,231,0.6); }
+
+    .footer-copy {
+      font-size: 12px;
+      color: rgba(247,242,231,0.15);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 18px 24px; }
+      .nav-right { gap: 20px; }
+      .nav-link { display: none; }
+
+      .form-layout {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      footer { padding: 40px 24px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 500px) {
+      .form-card { padding: 32px 24px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── Mobile hamburger & drawer ─────────────────────────────── */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .nav-hamburger span {
+      display: block;
+      height: 1.5px;
+      background: rgba(247,242,231,0.75);
+      border-radius: 2px;
+      transition: transform 0.28s ease, opacity 0.2s ease, width 0.2s ease;
+      transform-origin: right center;
+    }
+    .nav-hamburger span:nth-child(1) { width: 22px; }
+    .nav-hamburger span:nth-child(2) { width: 14px; }
+    .nav-hamburger span:nth-child(3) { width: 22px; }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(-45deg); width: 22px; }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(45deg); width: 22px; }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      background: var(--green);
+      overflow-y: auto;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      pointer-events: none;
+    }
+    .mobile-menu.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .mobile-nav {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: 100px 32px 52px;
+    }
+    .mobile-links { flex: 1; }
+    .mobile-link {
+      display: block;
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(247,242,231,0.4);
+      text-decoration: none;
+      padding: 17px 0;
+      border-bottom: 1px solid rgba(247,242,231,0.07);
+      letter-spacing: -0.01em;
+      transition: color 0.15s ease, padding-left 0.15s ease;
+    }
+    .mobile-link:first-child { border-top: 1px solid rgba(247,242,231,0.07); }
+    .mobile-link:hover, .mobile-link:active {
+      color: rgba(247,242,231,0.9);
+      padding-left: 6px;
+    }
+    .mobile-bottom {
+      margin-top: 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .mobile-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.6;
+    }
+    .mobile-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: var(--cream);
+      color: var(--green);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 16px 24px;
+      border-radius: 50px;
+      transition: opacity 0.2s;
+    }
+    .mobile-cta:hover { opacity: 0.88; }
+
+    @media (max-width: 768px) {
+      .nav-cta       { display: none; }
+      .nav-hamburger { display: flex; }
+      .mobile-menu   { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a href="index.html" class="nav-word">Rihdal</a>
+    <div class="nav-right">
+      <a href="guides.html" class="nav-link">Guides</a>
+      <a href="campus/" class="nav-link">Campus Hub</a>
+      <a href="partners.html" class="nav-link active">Partner with us</a>
+      <a href="https://apps.apple.com/us/app/rihdal/id6767651676" target="_blank" rel="noopener noreferrer" class="nav-cta">Download</a>
+      <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false" onclick="toggleMenu(this)">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="hero-inner">
+      <a href="partners.html" class="back-link">← Back to partnerships</a>
+      <p class="eyebrow">For Mosques</p>
+      <h1 class="page-title">List your mosque on Rihdal</h1>
+      <p class="page-sub">Reach Muslims searching for a mosque nearby. Submit your details and we'll have your profile live within 48 hours.</p>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="form-section">
+    <div class="container">
+      <div class="form-layout">
+
+        <!-- Benefits -->
+        <div class="benefits-col">
+          <p class="benefits-label">What you get</p>
+          <h2 class="benefits-title">Your mosque, in front of thousands of Muslims.</h2>
+          <ul class="benefit-list">
+            <li class="benefit-item">
+              <span class="benefit-dot"></span>
+              <span class="benefit-text">
+                <strong>Free, permanent listing</strong>
+                No fees, no subscriptions — ever.
+              </span>
+            </li>
+            <li class="benefit-item">
+              <span class="benefit-dot"></span>
+              <span class="benefit-text">
+                <strong>Jummah times front and center</strong>
+                Shown to users searching for mosques in your area.
+              </span>
+            </li>
+            <li class="benefit-item">
+              <span class="benefit-dot"></span>
+              <span class="benefit-text">
+                <strong>Community announcements</strong>
+                Post events and updates that reach your local community.
+              </span>
+            </li>
+            <li class="benefit-item">
+              <span class="benefit-dot"></span>
+              <span class="benefit-text">
+                <strong>Verified badge</strong>
+                A verified mark so users know your listing is official.
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Form -->
+        <div class="form-card">
+          <form
+            action="https://formspree.io/f/meeygzrb"
+            method="POST"
+          >
+            <input type="hidden" name="_subject" value="New Mosque Partnership Inquiry — Rihdal" />
+            <input type="hidden" name="_next" value="thanks.html" />
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="contact-name">Your name</label>
+                <input class="form-input" type="text" id="contact-name" name="contact_name" placeholder="Ali Hassan" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="email">Email address</label>
+                <input class="form-input" type="email" id="email" name="email" placeholder="admin@mosque.org" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="mosque-name">Mosque / Masjid name</label>
+              <input class="form-input" type="text" id="mosque-name" name="mosque_name" placeholder="Masjid Al-Noor" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="city">City</label>
+                <input class="form-input" type="text" id="city" name="city" placeholder="Chicago" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="country">Country</label>
+                <input class="form-input" type="text" id="country" name="country" placeholder="United States" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="website">Website <span class="optional">(optional)</span></label>
+              <input class="form-input" type="url" id="website" name="website" placeholder="https://yourmasjid.org" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="message">Anything else you'd like to share <span class="optional">(optional)</span></label>
+              <textarea class="form-textarea" id="message" name="message" placeholder="Jummah times, capacity, services offered, etc."></textarea>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <button type="submit" class="btn-submit">Submit your mosque</button>
+            <p class="form-note">We'll be in touch within 48 hours. No account needed.</p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-word">Rihdal</span>
+      <div class="footer-links">
+        <a href="privacy.html" class="footer-link">Privacy Policy</a>
+        <a href="terms.html" class="footer-link">Terms of Service</a>
+        <a href="mailto:support@rihdal.com" class="footer-link">Contact</a>
+      </div>
+      <span class="footer-copy">&copy; 2026 Rihdal</span>
+    </div>
+  </footer>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <nav class="mobile-nav">
+      <div class="mobile-links">
+        <a href="index.html" class="mobile-link">Home</a>
+        <a href="guides.html" class="mobile-link">Guides</a>
+        <a href="campus/" class="mobile-link">Campus Hub</a>
+        <a href="for-restaurants.html" class="mobile-link">For Restaurants</a>
+      </div>
+      <div class="mobile-bottom">
+        <p class="mobile-eyebrow">Guide Your Journey</p>
+        <a href="https://apps.apple.com/us/app/rihdal/id6767651676" target="_blank" rel="noopener noreferrer" class="mobile-cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Download on the App Store
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    function toggleMenu(btn) {
+      const menu = document.getElementById('mobileMenu');
+      const open = menu.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+    // Close on nav link tap
+    document.querySelectorAll('.mobile-link, .mobile-cta').forEach(el => {
+      el.addEventListener('click', () => {
+        const menu = document.getElementById('mobileMenu');
+        const btn  = document.querySelector('.nav-hamburger');
+        menu.classList.remove('open');
+        btn && btn.classList.remove('open');
+        btn && btn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      });
+    });
+  </script>
+</body>
+</html>
