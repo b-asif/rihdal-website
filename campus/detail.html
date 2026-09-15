@@ -573,6 +573,11 @@
         return;
       }
 
+      // Apply MSA school colors to the page header
+      if (msa.primary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.primary_color)) {
+        document.getElementById('page-header').style.setProperty('--green', msa.primary_color);
+      }
+
       // Community quick-links in header
       const qlEl = document.getElementById('quick-links');
       if (qlEl) {
@@ -607,10 +612,12 @@
       }
 
       // ── Jummah banner ──
+      const jummahBg = (msa.primary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.primary_color)) ? msa.primary_color : null;
+      const nextRowBg = (msa.secondary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.secondary_color)) ? msa.secondary_color : null;
       const jm = jummah.data || [];
       if (jm.length === 1) {
         const j = jm[0];
-        html += `<div class="jummah-banner">
+        html += `<div class="jummah-banner"${jummahBg ? ` style="background:${jummahBg}"` : ''}>
           <div class="jummah-eyebrow">Every Friday · Jummah Prayer</div>
           <div class="jummah-time">${esc(j.time)}${j.location ? `  ·  ${esc(j.location)}` : ''}</div>
           ${j.building ? `<div class="jummah-location">${esc(j.building)}</div>` : ''}
@@ -624,14 +631,14 @@
             <div class="jummah-slot-loc">${[j.location, j.building].filter(Boolean).map(esc).join(' · ') || ''}</div>
             ${j.khateeb ? `<div class="jummah-slot-loc">Khateeb: ${esc(j.khateeb)}</div>` : ''}
           </div>`).join('');
-        html += `<div class="jummah-banner">
+        html += `<div class="jummah-banner"${jummahBg ? ` style="background:${jummahBg}"` : ''}>
           <div class="jummah-eyebrow">Every Friday · Jummah Prayer</div>
           <div class="jummah-time" style="font-size:18px;margin-bottom:12px;">${jm.length} Jummah prayers</div>
           <div class="jummah-multi">${slots}</div>
         </div>`;
       } else {
         const fallbackEmail = msa.email ? ` <a href="mailto:${esc(msa.email)}" style="color:rgba(247,242,231,0.8);font-weight:700;">Contact the MSA</a> for this week's details.` : '';
-        html += `<div class="jummah-banner">
+        html += `<div class="jummah-banner"${jummahBg ? ` style="background:${jummahBg}"` : ''}>
           <div class="jummah-eyebrow">Every Friday · Jummah Prayer</div>
           <div class="jummah-time" style="font-size:16px;font-weight:600;color:rgba(247,242,231,0.6);">Jummah details coming soon.${fallbackEmail}</div>
         </div>`;
@@ -649,7 +656,7 @@
         const mins = parseMins(p.time);
         const isNext = !nextFound && mins !== null && mins > nowMins;
         if (isNext) nextFound = true;
-        return `<div class="prayer-row${isNext ? ' next' : ''}">
+        return `<div class="prayer-row${isNext ? ' next' : ''}"${isNext && nextRowBg ? ` style="background:${nextRowBg}"` : ''}>
           <span class="prayer-row-name">${esc(PRAYER_LABELS[p.prayer] || p.prayer)}</span>
           <div style="text-align:right;">
             <div class="prayer-row-time">${esc(p.time)}</div>
