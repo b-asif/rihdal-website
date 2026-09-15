@@ -630,6 +630,31 @@
           <button class="btn btn-green" id="prof-save-btn">Save Profile</button>
         </div>
       </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-title">School Colors</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Set your school's colors to brand your campus page. Leave blank to use Rihdal defaults.</p>
+        <div class="form-row">
+          <div class="form-field" style="margin:0;">
+            <label class="form-label">Primary Color</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="color" id="prof-primary-picker" style="width:40px;height:36px;padding:2px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#fff;" />
+              <input class="form-input" id="prof-primary-color" placeholder="#1F3D2B" maxlength="7" style="font-family:monospace;" />
+            </div>
+          </div>
+          <div class="form-field" style="margin:0;">
+            <label class="form-label">Secondary Color</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="color" id="prof-secondary-picker" style="width:40px;height:36px;padding:2px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#fff;" />
+              <input class="form-input" id="prof-secondary-color" placeholder="#F7F2E7" maxlength="7" style="font-family:monospace;" />
+            </div>
+          </div>
+        </div>
+        <div id="prof-color-preview" style="display:none;margin-top:14px;height:40px;border-radius:10px;overflow:hidden;display:flex;"></div>
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn btn-green" id="prof-colors-save-btn">Save Colors</button>
+        </div>
+      </div>
     </div>
 
     <!-- Prayer Times -->
@@ -1074,6 +1099,41 @@ async function loadDashboard() {
 }
 
 // ── MSA Profile ──
+function isValidHex(v) { return /^#[0-9A-Fa-f]{6}$/.test(v); }
+
+function updateColorPreview() {
+  const primary   = document.getElementById('prof-primary-color').value.trim();
+  const secondary = document.getElementById('prof-secondary-color').value.trim();
+  const preview   = document.getElementById('prof-color-preview');
+  if (isValidHex(primary) || isValidHex(secondary)) {
+    preview.style.display = 'flex';
+    preview.innerHTML = `
+      <div style="flex:1;background:${isValidHex(primary) ? primary : '#1F3D2B'}"></div>
+      <div style="flex:1;background:${isValidHex(secondary) ? secondary : '#F7F2E7'}"></div>`;
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// Sync color picker → text input
+document.getElementById('prof-primary-picker').addEventListener('input', e => {
+  document.getElementById('prof-primary-color').value = e.target.value;
+  updateColorPreview();
+});
+document.getElementById('prof-secondary-picker').addEventListener('input', e => {
+  document.getElementById('prof-secondary-color').value = e.target.value;
+  updateColorPreview();
+});
+// Sync text input → color picker
+document.getElementById('prof-primary-color').addEventListener('input', e => {
+  if (isValidHex(e.target.value)) document.getElementById('prof-primary-picker').value = e.target.value;
+  updateColorPreview();
+});
+document.getElementById('prof-secondary-color').addEventListener('input', e => {
+  if (isValidHex(e.target.value)) document.getElementById('prof-secondary-picker').value = e.target.value;
+  updateColorPreview();
+});
+
 async function loadProfile() {
   const { data } = await sb.from('msas').select('*').eq('id', msaId).maybeSingle();
   if (!data) return;
@@ -1082,6 +1142,14 @@ async function loadProfile() {
   document.getElementById('prof-email').value     = data.email ?? '';
   document.getElementById('prof-website').value   = data.website ?? '';
   document.getElementById('prof-instagram').value = data.instagram_handle ?? '';
+
+  const primary   = data.primary_color ?? '';
+  const secondary = data.secondary_color ?? '';
+  document.getElementById('prof-primary-color').value   = primary;
+  document.getElementById('prof-secondary-color').value = secondary;
+  if (isValidHex(primary))   document.getElementById('prof-primary-picker').value   = primary;
+  if (isValidHex(secondary)) document.getElementById('prof-secondary-picker').value = secondary;
+  updateColorPreview();
 }
 
 document.getElementById('prof-save-btn').addEventListener('click', async () => {
@@ -1098,6 +1166,21 @@ document.getElementById('prof-save-btn').addEventListener('click', async () => {
   btn.disabled = false;
   if (error) toast(error.message, true);
   else { toast('Profile saved'); document.getElementById('sb-msa-name').textContent = document.getElementById('prof-name').value.trim(); }
+});
+
+document.getElementById('prof-colors-save-btn').addEventListener('click', async () => {
+  const btn     = document.getElementById('prof-colors-save-btn');
+  const primary   = document.getElementById('prof-primary-color').value.trim();
+  const secondary = document.getElementById('prof-secondary-color').value.trim();
+  btn.disabled = true;
+  const { error } = await sb.from('msas').update({
+    primary_color:   isValidHex(primary)   ? primary   : null,
+    secondary_color: isValidHex(secondary) ? secondary : null,
+    updated_at:      new Date().toISOString(),
+  }).eq('id', msaId);
+  btn.disabled = false;
+  if (error) toast(error.message, true);
+  else toast('Colors saved');
 });
 
 // ── Prayer Times ──
