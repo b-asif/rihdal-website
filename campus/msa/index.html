@@ -1111,15 +1111,8 @@ function applyMsaColors(primary, secondary) {
     root.style.removeProperty('--green');
     root.style.removeProperty('--green-mid');
   }
-  if (isValidHex(secondary)) {
-    root.style.setProperty('--cream',     secondary);
-    root.style.setProperty('--cream-dim', secondary);
-    root.style.setProperty('--sage',      secondary);
-  } else {
-    root.style.removeProperty('--cream');
-    root.style.removeProperty('--cream-dim');
-    root.style.removeProperty('--sage');
-  }
+  // Secondary is used only as a subtle accent — never as a full background.
+  // --cream and --sage stay as their defaults so page backgrounds stay light.
 }
 
 function updateColorPreview() {
