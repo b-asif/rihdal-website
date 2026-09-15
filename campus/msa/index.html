@@ -949,7 +949,7 @@ async function initApp() {
   const [{ data: profile }, { data: membership }] = await Promise.all([
     sb.from('profiles').select('name, is_admin').eq('id', user.id).maybeSingle(),
     sb.from('msa_members')
-      .select('msa_id, role, status, msas(id, name, university_id, universities(name, slug))')
+      .select('msa_id, role, status, msas(id, name, university_id, primary_color, secondary_color, universities(name, slug))')
       .eq('user_id', user.id)
       .eq('status', 'active')
       .order('requested_at')
@@ -996,6 +996,7 @@ async function initApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   if (window.lucide) window.lucide.createIcons();
+  applyMsaColors(msaData?.primary_color ?? '', msaData?.secondary_color ?? '');
   goPage(sessionStorage.getItem('msa-last-page') ?? 'dashboard');
 }
 
