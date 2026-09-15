@@ -1101,6 +1101,26 @@ async function loadDashboard() {
 // ── MSA Profile ──
 function isValidHex(v) { return /^#[0-9A-Fa-f]{6}$/.test(v); }
 
+function applyMsaColors(primary, secondary) {
+  const root = document.documentElement;
+  if (isValidHex(primary)) {
+    root.style.setProperty('--green',     primary);
+    root.style.setProperty('--green-mid', primary);
+  } else {
+    root.style.removeProperty('--green');
+    root.style.removeProperty('--green-mid');
+  }
+  if (isValidHex(secondary)) {
+    root.style.setProperty('--cream',     secondary);
+    root.style.setProperty('--cream-dim', secondary);
+    root.style.setProperty('--sage',      secondary);
+  } else {
+    root.style.removeProperty('--cream');
+    root.style.removeProperty('--cream-dim');
+    root.style.removeProperty('--sage');
+  }
+}
+
 function updateColorPreview() {
   const primary   = document.getElementById('prof-primary-color').value.trim();
   const secondary = document.getElementById('prof-secondary-color').value.trim();
@@ -1150,6 +1170,7 @@ async function loadProfile() {
   if (isValidHex(primary))   document.getElementById('prof-primary-picker').value   = primary;
   if (isValidHex(secondary)) document.getElementById('prof-secondary-picker').value = secondary;
   updateColorPreview();
+  applyMsaColors(primary, secondary);
 }
 
 document.getElementById('prof-save-btn').addEventListener('click', async () => {
@@ -1180,7 +1201,10 @@ document.getElementById('prof-colors-save-btn').addEventListener('click', async 
   }).eq('id', msaId);
   btn.disabled = false;
   if (error) toast(error.message, true);
-  else toast('Colors saved');
+  else {
+    toast('Colors saved');
+    applyMsaColors(primary, secondary);
+  }
 });
 
 // ── Prayer Times ──
