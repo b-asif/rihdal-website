@@ -574,8 +574,8 @@
       }
 
       // Apply MSA school colors to the page header
-      if (msa.primary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.primary_color)) {
-        document.getElementById('page-header').style.setProperty('--green', msa.primary_color);
+      if (msa.background_color && /^#[0-9A-Fa-f]{6}$/.test(msa.background_color)) {
+        document.getElementById('page-header').style.setProperty('--green', msa.background_color);
       }
 
       // Community quick-links in header
@@ -612,8 +612,8 @@
       }
 
       // ── Jummah banner ──
-      const jummahBg = (msa.primary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.primary_color)) ? msa.primary_color : null;
-      const nextRowBg = (msa.secondary_color && /^#[0-9A-Fa-f]{6}$/.test(msa.secondary_color)) ? msa.secondary_color : null;
+      const jummahBg = (msa.background_color && /^#[0-9A-Fa-f]{6}$/.test(msa.background_color)) ? msa.background_color : null;
+      const nextRowBg = null;
       const jm = jummah.data || [];
       if (jm.length === 1) {
         const j = jm[0];
