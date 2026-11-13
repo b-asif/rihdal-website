@@ -177,6 +177,12 @@
     .sidebar-wordmark { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,242,231,0.5); }
     .sidebar-msa { font-size: 14px; font-weight: 700; color: var(--cream); margin-top: 4px; line-height: 1.3; }
     .sidebar-uni { font-size: 11px; color: rgba(247,242,231,0.45); margin-top: 2px; }
+    .sidebar-msa-select {
+      display: none; width: 100%; margin-top: 8px; padding: 5px 6px;
+      font: inherit; font-size: 12px; color: var(--cream);
+      background: rgba(247,242,231,0.08); border: 1px solid rgba(247,242,231,0.2); border-radius: 6px;
+    }
+    .sidebar-msa-select option { color: #000; }
     .sidebar-role {
       display: inline-block; margin-top: 8px;
       font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
@@ -515,6 +521,7 @@
       <div class="sidebar-wordmark">Rihdal</div>
       <div class="sidebar-msa" id="sb-msa-name">—</div>
       <div class="sidebar-uni" id="sb-uni-name"></div>
+      <select class="sidebar-msa-select" id="sb-msa-select" aria-label="Switch MSA"></select>
       <span class="sidebar-role" id="sb-role"></span>
     </div>
     <nav class="sidebar-nav">
@@ -776,6 +783,34 @@ function toLocalInputValue(date) {
   return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+// Today's date as "YYYY-MM-DD" in local time (toISOString() would give the UTC date)
+function localDateISO(d = new Date()) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// Prefix https:// onto links like "forms.gle/abc"; drop schemes other than http(s)/mailto/tel
+function normalizeUrl(url) {
+  const t = (url ?? '').trim();
+  if (!t) return null;
+  if (!/^[a-z][a-z0-9+-]*:(?!\d)/i.test(t)) return `https://${t}`;
+  return /^(https?|mailto|tel):/i.test(t) ? t : null;
+}
+
+// RLS silently filters out rows the user can't change, so a write that matched
+// nothing is reported as an error instead of a false "saved". Returns an error message or null.
+async function updateRow(table, id, values) {
+  const { data, error } = await sb.from(table).update(values).eq('id', id).select('id');
+  if (error) return error.message;
+  return data?.length ? null : "You don't have permission to edit this item.";
+}
+
+async function deleteRow(table, id) {
+  const { data, error } = await sb.from(table).delete().eq('id', id).select('id');
+  if (error) return error.message;
+  return data?.length ? null : "You don't have permission to delete this item.";
+}
+
 // Read a datetime-local input value and return a UTC ISO string for Supabase.
 // Browsers parse "YYYY-MM-DDTHH:MM" (no timezone) as LOCAL time, so
 // new Date(value).toISOString() correctly converts local → UTC.
@@ -954,16 +989,19 @@ function hideAllScreens() {
 // ── Init app after auth ──
 async function initApp() {
   // Fetch profile + membership in parallel
-  const [{ data: profile }, { data: membership }] = await Promise.all([
+  const [{ data: profile }, { data: memberships }] = await Promise.all([
     sb.from('profiles').select('name, is_admin').eq('id', user.id).maybeSingle(),
     sb.from('msa_members')
       .select('msa_id, role, status, msas(id, name, university_id, background_color, text_color, button_color, universities(name, slug))')
       .eq('user_id', user.id)
       .eq('status', 'active')
-      .order('requested_at')
-      .limit(1)
-      .maybeSingle(),
+      .order('requested_at'),
   ]);
+
+  // Members of several MSAs pick which one to manage; the choice is remembered per browser
+  let savedMsaId = null;
+  try { savedMsaId = localStorage.getItem('msa-active-id'); } catch {}
+  const membership = (memberships || []).find(m => m.msa_id === savedMsaId) ?? memberships?.[0] ?? null;
 
   const isGlobalAdmin = profile?.is_admin === true;
 
@@ -992,6 +1030,18 @@ async function initApp() {
   document.getElementById('sb-msa-name').textContent = msaData?.name ?? 'Global Admin';
   document.getElementById('sb-uni-name').textContent = uniData?.name ?? '';
   document.getElementById('sb-role').textContent = userRole;
+
+  const msaSelect = document.getElementById('sb-msa-select');
+  if ((memberships || []).length > 1) {
+    msaSelect.innerHTML = memberships
+      .map(m => `<option value="${m.msa_id}" ${m.msa_id === msaId ? 'selected' : ''}>${esc(m.msas?.name ?? 'MSA')}</option>`)
+      .join('');
+    msaSelect.style.display = 'block';
+    msaSelect.onchange = () => {
+      try { localStorage.setItem('msa-active-id', msaSelect.value); } catch {}
+      location.reload();
+    };
+  }
   if (uniData?.slug) {
     document.getElementById('sb-public-link').href = `../../campus/detail.html?slug=${uniData.slug}`;
   }
@@ -1011,10 +1061,15 @@ async function initApp() {
 // ── Page loaders ──
 async function loadPage(name) {
   if (!msaId) {
-    // Show a nudge in the prayer-times form; other pages have their own empty states
-    if (name === 'prayer-times') {
-      document.getElementById('pt-form').innerHTML =
-        `<p style="color:var(--muted);padding:8px 0">Select an MSA using the sidebar picker to manage prayer times.</p>`;
+    // No MSA to manage (e.g. a global admin who isn't on an MSA team). Hide the page's
+    // forms and buttons so nothing can be saved without an MSA, and say why.
+    const page = document.getElementById('page-' + name);
+    if (page && !page.querySelector('.no-msa-note')) {
+      [...page.children].forEach(el => {
+        if (!el.classList.contains('page-title') && !el.classList.contains('page-sub')) el.style.display = 'none';
+      });
+      page.insertAdjacentHTML('beforeend',
+        `<p class="no-msa-note" style="color:var(--muted);padding:8px 0">Your account isn't on any MSA team, so there's nothing to manage here yet.</p>`);
     }
     return;
   }
@@ -1044,10 +1099,11 @@ async function loadDashboard() {
 
   // Parallel data fetch
   const now = new Date().toISOString();
-  const [evAll, evUpcoming, annActive, spaces, jummah, prayers] = await Promise.all([
+  const [evAll, evUpcoming, annActive, annAll, spaces, jummah, prayers] = await Promise.all([
     sb.from('campus_events').select('id', { count: 'exact', head: true }).eq('msa_id', msaId).eq('is_published', true),
     sb.from('campus_events').select('id, title, event_start, category').eq('msa_id', msaId).eq('is_published', true).or(`event_start.gte.${now},event_start.is.null`).order('event_start', { nullsFirst: false }).limit(3),
     sb.from('campus_announcements').select('id, title, created_at').eq('msa_id', msaId).eq('is_published', true).order('created_at', { ascending: false }).limit(3),
+    sb.from('campus_announcements').select('id', { count: 'exact', head: true }).eq('msa_id', msaId).eq('is_published', true),
     sb.from('campus_prayer_spaces').select('id', { count: 'exact', head: true }).eq('msa_id', msaId).eq('is_active', true),
     sb.from('campus_jummah').select('id', { count: 'exact', head: true }).eq('msa_id', msaId).eq('is_active', true),
     sb.from('campus_prayer_times').select('prayer, time, location').eq('msa_id', msaId),
@@ -1056,7 +1112,7 @@ async function loadDashboard() {
   // Stats row
   document.getElementById('dash-stats').innerHTML = `
     <div class="stat-card"><div class="stat-num">${evAll.count ?? 0}</div><div class="stat-label">Events</div></div>
-    <div class="stat-card"><div class="stat-num">${annActive.data?.length ?? 0}</div><div class="stat-label">Announcements</div></div>
+    <div class="stat-card"><div class="stat-num">${annAll.count ?? 0}</div><div class="stat-label">Announcements</div></div>
     <div class="stat-card"><div class="stat-num">${spaces.count ?? 0}</div><div class="stat-label">Prayer Spaces</div></div>
     <div class="stat-card"><div class="stat-num">${jummah.count ?? 0}</div><div class="stat-label">Jummah Times</div></div>`;
 
@@ -1199,16 +1255,16 @@ async function loadProfile() {
 document.getElementById('prof-save-btn').addEventListener('click', async () => {
   const btn = document.getElementById('prof-save-btn');
   btn.disabled = true;
-  const { error } = await sb.from('msas').update({
+  const error = await updateRow('msas', msaId, {
     name:             document.getElementById('prof-name').value.trim(),
     description:      document.getElementById('prof-desc').value.trim() || null,
     email:            document.getElementById('prof-email').value.trim() || null,
-    website:          document.getElementById('prof-website').value.trim() || null,
+    website:          normalizeUrl(document.getElementById('prof-website').value),
     instagram_handle: document.getElementById('prof-instagram').value.trim().replace(/^@/,'') || null,
     updated_at:       new Date().toISOString(),
-  }).eq('id', msaId);
+  });
   btn.disabled = false;
-  if (error) toast(error.message, true);
+  if (error) toast(error, true);
   else { toast('Profile saved'); document.getElementById('sb-msa-name').textContent = document.getElementById('prof-name').value.trim(); }
 });
 
@@ -1218,14 +1274,14 @@ document.getElementById('prof-colors-save-btn').addEventListener('click', async 
   const text   = document.getElementById('prof-text-color').value.trim();
   const button = document.getElementById('prof-button-color').value.trim();
   btn.disabled = true;
-  const { error } = await sb.from('msas').update({
+  const error = await updateRow('msas', msaId, {
     background_color: isValidHex(bg)     ? bg     : null,
     text_color:   isValidHex(text)   ? text   : null,
     button_color: isValidHex(button) ? button : null,
     updated_at:   new Date().toISOString(),
-  }).eq('id', msaId);
+  });
   btn.disabled = false;
-  if (error) toast(error.message, true);
+  if (error) toast(error, true);
   else {
     toast('Colors saved');
     applyMsaColors(bg, text, button);
@@ -1288,7 +1344,14 @@ document.getElementById('pt-save-btn').addEventListener('click', async () => {
       updated_at: new Date().toISOString(),
     }))
     .filter(r => r.time);
-  const { error } = await sb.from('campus_prayer_times').upsert(upserts, { onConflict: 'msa_id,prayer' });
+  // Prayers whose time was cleared are removed rather than silently kept
+  const cleared = PRAYERS.filter(p => !upserts.some(r => r.prayer === p));
+  let { error } = upserts.length
+    ? await sb.from('campus_prayer_times').upsert(upserts, { onConflict: 'msa_id,prayer' })
+    : { error: null };
+  if (!error && cleared.length) {
+    ({ error } = await sb.from('campus_prayer_times').delete().eq('msa_id', msaId).in('prayer', cleared));
+  }
   btn.disabled = false;
   if (error) toast(error.message, true); else toast('Prayer times saved');
 });
@@ -1307,7 +1370,7 @@ async function loadJummah() {
           </div>
           <div class="list-item-actions">
             <button class="btn btn-outline" onclick="editJummah('${j.id}')">Edit</button>
-            <button class="btn btn-danger" onclick="deleteJummah('${j.id}','${esc(j.time)}')">Delete</button>
+            <button class="btn btn-danger" data-label="${esc(j.time)}" onclick="deleteJummah('${j.id}', this.dataset.label)">Delete</button>
           </div>
         </div>`).join('');
 }
@@ -1348,22 +1411,23 @@ window.editJummah = async (id) => {
   openModal('Edit Jummah', jummahForm(j), async () => {
     const time = document.getElementById('jm-time').value.trim();
     if (!time) { toast('Time is required', true); return; }
-    const { error } = await sb.from('campus_jummah').update({
+    const error = await updateRow('campus_jummah', id, {
       time, location: document.getElementById('jm-loc').value.trim()||null,
       building: document.getElementById('jm-building').value.trim()||null,
       khateeb:  document.getElementById('jm-khateeb').value.trim()||null,
       language: document.getElementById('jm-language').value.trim()||'English',
       notes:    document.getElementById('jm-notes').value.trim()||null,
       updated_at: new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
+    });
+    if (error) { toast(error, true); return; }
     toast('Jummah updated'); closeModal(); loadJummah();
   });
 };
 
 window.deleteJummah = async (id, label) => {
   confirm_delete(label, async () => {
-    await sb.from('campus_jummah').delete().eq('id', id);
+    const error = await deleteRow('campus_jummah', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadJummah();
   });
 };
@@ -1382,7 +1446,7 @@ async function loadSpaces() {
           </div>
           <div class="list-item-actions">
             <button class="btn btn-outline" onclick="editSpace('${s.id}')">Edit</button>
-            <button class="btn btn-danger" onclick="deleteSpace('${s.id}','${esc(s.name)}')">Delete</button>
+            <button class="btn btn-danger" data-label="${esc(s.name)}" onclick="deleteSpace('${s.id}', this.dataset.label)">Delete</button>
           </div>
         </div>`).join('');
 }
@@ -1433,7 +1497,7 @@ window.editSpace = async (id) => {
   openModal('Edit Prayer Space', spaceForm(s), async () => {
     const name = document.getElementById('sp-name').value.trim();
     if (!name) { toast('Name is required', true); return; }
-    const { error } = await sb.from('campus_prayer_spaces').update({
+    const error = await updateRow('campus_prayer_spaces', id, {
       name, building: document.getElementById('sp-building').value.trim()||null,
       room_number: document.getElementById('sp-room').value.trim()||null,
       floor: document.getElementById('sp-floor').value.trim()||null,
@@ -1444,15 +1508,16 @@ window.editSpace = async (id) => {
       sisters_space: document.getElementById('sp-sisters').checked,
       is_active: document.getElementById('sp-active').checked,
       updated_at: new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
+    });
+    if (error) { toast(error, true); return; }
     toast('Space updated'); closeModal(); loadSpaces();
   });
 };
 
 window.deleteSpace = async (id, name) => {
   confirm_delete(name, async () => {
-    await sb.from('campus_prayer_spaces').delete().eq('id', id);
+    const error = await deleteRow('campus_prayer_spaces', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadSpaces();
   });
 };
@@ -1473,7 +1538,7 @@ async function loadEvents() {
             </div>
             <div class="list-item-actions">
               <button class="btn btn-outline" onclick="editEvent('${e.id}')">Edit</button>
-              <button class="btn btn-danger" onclick="deleteEvent('${e.id}','${esc(e.title)}')">Delete</button>
+              <button class="btn btn-danger" data-label="${esc(e.title)}" onclick="deleteEvent('${e.id}', this.dataset.label)">Delete</button>
             </div>
           </div>`;
       }).join('');
@@ -1492,6 +1557,81 @@ async function uploadEventFlyer(fileInput) {
   });
   if (error) throw new Error(`Flyer upload failed: ${error.message}`);
   return sb.storage.from('campus-event-flyers').getPublicUrl(path).data.publicUrl;
+}
+
+// ── Event notification wording (mirrors lib/campus.ts in the app) ──
+function formatEventWhen(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+}
+
+function isEventPast(ev) {
+  const last = ev.event_end ?? ev.event_start;
+  return !!last && new Date(last).getTime() < Date.now();
+}
+
+// What followers should be told when saving `next` (previously `prev`, or null if new).
+// null = not worth a push by default (description, flyer, category, link edits).
+function suggestEventNotice(prev, next) {
+  if (!next.is_published || isEventPast(next)) return null;
+  const when = formatEventWhen(next.event_start);
+  const loc  = next.location?.trim() || null;
+  if (!prev || !prev.is_published) {
+    return { kind: 'new', title: `New event: ${next.title}`, body: [when, loc].filter(Boolean).join(' · ') || 'Tap to see the details.' };
+  }
+  const ms = v => v ? new Date(v).getTime() : null;
+  const timeChanged = ms(prev.event_start) !== ms(next.event_start) || ms(prev.event_end) !== ms(next.event_end);
+  const locChanged  = (prev.location ?? '').trim() !== (next.location ?? '').trim();
+  const whenText = when ? `Now ${when}` : 'The time is now to be announced';
+  const locText  = loc ? `now at ${loc}` : 'the location is now to be announced';
+  if (timeChanged && locChanged) return { kind: 'update', title: `Updated: ${next.title}`, body: `${whenText}, ${locText}.` };
+  if (timeChanged) return { kind: 'update', title: `Time changed: ${next.title}`, body: `${whenText}.` };
+  if (locChanged)  return { kind: 'update', title: `Location changed: ${next.title}`, body: `${locText.charAt(0).toUpperCase()}${locText.slice(1)}.` };
+  return null;
+}
+
+function eventCancelNotice(ev) {
+  if (!ev.is_published || isEventPast(ev)) return null;
+  const when = formatEventWhen(ev.event_start);
+  return { kind: 'cancel', title: `Cancelled: ${ev.title}`, body: when ? `The event on ${when} has been cancelled.` : 'This event has been cancelled.' };
+}
+
+function readEventForm() {
+  return {
+    title:        document.getElementById('ev-title').value.trim(),
+    event_start:  datetimeLocalToIso('ev-start'),
+    event_end:    datetimeLocalToIso('ev-end'),
+    location:     document.getElementById('ev-loc').value.trim() || null,
+    is_published: document.getElementById('ev-published').checked,
+  };
+}
+
+// Keeps the "Notify followers" checkbox defaulted to what changed (until the user
+// touches it) and previews the push. Returns a getter for the notice to send, or null.
+function wireEventNotify(original) {
+  const box  = document.getElementById('ev-notify');
+  const hint = document.getElementById('ev-notify-hint');
+  let touched = false;
+  box.addEventListener('change', () => { touched = true; refresh(); });
+  const current = () => {
+    const next = readEventForm();
+    const suggested = suggestEventNotice(original, next);
+    const notice = suggested ?? { kind: 'update', title: `Updated: ${next.title}`, body: 'Event details were updated — tap to see them.' };
+    const allowed = next.is_published && !isEventPast(next);
+    return { suggested, notice, allowed };
+  };
+  function refresh() {
+    const { suggested, notice, allowed } = current();
+    box.disabled = !allowed;
+    if (!touched) box.checked = allowed && !!suggested;
+    hint.textContent = !allowed ? '(only for upcoming published events)' : box.checked ? `— "${notice.title}"` : '';
+  }
+  ['ev-title', 'ev-start', 'ev-end', 'ev-loc', 'ev-published'].forEach(id =>
+    document.getElementById(id).addEventListener('input', refresh));
+  document.getElementById('ev-published').addEventListener('change', refresh);
+  refresh();
+  return () => { const { notice, allowed } = current(); return allowed && box.checked ? notice : null; };
 }
 
 function eventForm(e={}) {
@@ -1522,7 +1662,7 @@ function eventForm(e={}) {
     </div>
     <div style="display:flex;gap:20px;margin-top:8px;flex-wrap:wrap;">
       <label class="form-check"><input type="checkbox" id="ev-published" ${e.is_published?'checked':''}> Published</label>
-      <label class="form-check"><input type="checkbox" id="ev-notify" ${e.notify_followers?'checked':''}> Notify followers</label>
+      <label class="form-check"><input type="checkbox" id="ev-notify"> Notify followers <span id="ev-notify-hint" style="color:var(--muted);font-size:12px;"></span></label>
     </div>`;
 }
 
@@ -1531,26 +1671,28 @@ document.getElementById('events-add-btn').addEventListener('click', () => {
     const title = document.getElementById('ev-title').value.trim();
     if (!title) { toast('Title is required', true); return; }
     const isPublished = document.getElementById('ev-published').checked;
-    const notifyFollowers = document.getElementById('ev-notify').checked;
+    const notice = getNotice();
+    const notifyFollowers = !!notice;
     let imageUrl = null;
     try { imageUrl = await uploadEventFlyer(document.getElementById('ev-flyer')); }
     catch (e) { toast(e.message, true); return; }
-    const { error } = await sb.from('campus_events').insert({
+    const { data: created, error } = await sb.from('campus_events').insert({
       msa_id: msaId, created_by: user.id, title,
       body:             document.getElementById('ev-body').value.trim()||null,
       event_start:      datetimeLocalToIso('ev-start'),
       event_end:        datetimeLocalToIso('ev-end'),
       location:         document.getElementById('ev-loc').value.trim()||null,
       category:         document.getElementById('ev-cat').value,
-      rsvp_url:         document.getElementById('ev-rsvp').value.trim()||null,
+      rsvp_url:         normalizeUrl(document.getElementById('ev-rsvp').value),
       image_url:        imageUrl,
       is_published:     isPublished,
       notify_followers: notifyFollowers,
-    });
+    }).select('id').single();
     if (error) { toast(error.message, true); return; }
-    if (isPublished && notifyFollowers) await notifyCampusFollowers('events', title, document.getElementById('ev-body').value.trim()||'New event posted.');
     toast('Event created'); closeModal(); loadEvents();
+    if (notice) await notifyCampusFollowers('events', notice.title, notice.body, { refId: created?.id, kind: notice.kind });
   });
+  const getNotice = wireEventNotify(null);
 });
 
 window.editEvent = async (id) => {
@@ -1559,34 +1701,42 @@ window.editEvent = async (id) => {
     const title = document.getElementById('ev-title').value.trim();
     if (!title) { toast('Title is required', true); return; }
     const isPublished = document.getElementById('ev-published').checked;
-    const notifyFollowers = document.getElementById('ev-notify').checked;
+    const notice = getNotice();
+    const notifyFollowers = !!notice;
     let imageUrl = e?.image_url ?? null;
     try {
       const uploaded = await uploadEventFlyer(document.getElementById('ev-flyer'));
       if (uploaded) imageUrl = uploaded;
     } catch (err) { toast(err.message, true); return; }
-    const { error } = await sb.from('campus_events').update({
+    const error = await updateRow('campus_events', id, {
       title, body: document.getElementById('ev-body').value.trim()||null,
       event_start:      datetimeLocalToIso('ev-start'),
       event_end:        datetimeLocalToIso('ev-end'),
       location:         document.getElementById('ev-loc').value.trim()||null,
       category:         document.getElementById('ev-cat').value,
-      rsvp_url:         document.getElementById('ev-rsvp').value.trim()||null,
+      rsvp_url:         normalizeUrl(document.getElementById('ev-rsvp').value),
       image_url:        imageUrl,
       is_published:     isPublished,
       notify_followers: notifyFollowers,
       updated_at:       new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
-    if (isPublished && notifyFollowers) await notifyCampusFollowers('events', title, document.getElementById('ev-body').value.trim()||'Event updated.');
+    });
+    if (error) { toast(error, true); return; }
     toast('Event updated'); closeModal(); loadEvents();
+    if (notice) await notifyCampusFollowers('events', notice.title, notice.body, { refId: id, kind: notice.kind });
   });
+  const getNotice = wireEventNotify(e);
 };
 
 window.deleteEvent = async (id, title) => {
   confirm_delete(title, async () => {
-    await sb.from('campus_events').delete().eq('id', id);
+    // Read before deleting so an upcoming published event can be announced as cancelled
+    const { data: ev } = await sb.from('campus_events').select('title, event_start, event_end, location, is_published').eq('id', id).maybeSingle();
+    const cancelNotice = ev && eventCancelNotice(ev);
+    const notify = !!cancelNotice && window.confirm(`Let followers know "${ev.title}" is cancelled?`);
+    const error = await deleteRow('campus_events', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadEvents();
+    if (notify) await notifyCampusFollowers('events', cancelNotice.title, cancelNotice.body, { refId: id, kind: 'cancel' });
   });
 };
 
@@ -1604,7 +1754,7 @@ async function loadAnnouncements() {
           </div>
           <div class="list-item-actions">
             <button class="btn btn-outline" onclick="editAnn('${a.id}')">Edit</button>
-            <button class="btn btn-danger" onclick="deleteAnn('${a.id}','${esc(a.title)}')">Delete</button>
+            <button class="btn btn-danger" data-label="${esc(a.title)}" onclick="deleteAnn('${a.id}', this.dataset.label)">Delete</button>
           </div>
         </div>`).join('');
 }
@@ -1615,7 +1765,7 @@ function annForm(a={}) {
     <div class="form-field"><label class="form-label">Body</label><textarea class="form-textarea" id="ann-body">${esc(a.body??'')}</textarea></div>
     <div style="display:flex;gap:20px;margin-top:8px;flex-wrap:wrap;">
       <label class="form-check"><input type="checkbox" id="ann-published" ${a.is_published?'checked':''}> Published</label>
-      <label class="form-check"><input type="checkbox" id="ann-notify"> Notify followers</label>
+      <label class="form-check"><input type="checkbox" id="ann-notify" ${a.is_published ? '' : 'checked'}> Notify followers</label>
     </div>`;
 }
 
@@ -1624,17 +1774,17 @@ document.getElementById('ann-add-btn').addEventListener('click', () => {
     const title = document.getElementById('ann-title').value.trim();
     if (!title) { toast('Title is required', true); return; }
     const isPublished = document.getElementById('ann-published').checked;
-    const notifyFollowers = document.getElementById('ann-notify').checked;
+    const notifyFollowers = (document.getElementById('ann-notify')?.checked ?? false);
     const annBody = document.getElementById('ann-body').value.trim()||null;
-    const { error } = await sb.from('campus_announcements').insert({
+    const { data: created, error } = await sb.from('campus_announcements').insert({
       msa_id: msaId, created_by: user.id, title,
       body:             annBody,
       is_published:     isPublished,
-      notify_followers: notifyFollowers,
-    });
+      notify_followers: isPublished && notifyFollowers,
+    }).select('id').single();
     if (error) { toast(error.message, true); return; }
-    if (isPublished && notifyFollowers) await notifyCampusFollowers('announcements', title, annBody||'New announcement posted.');
     toast('Announcement created'); closeModal(); loadAnnouncements();
+    if (isPublished && notifyFollowers) await notifyCampusFollowers('announcements', title, annBody||'New announcement posted.', { refId: created?.id, kind: 'new' });
   });
 });
 
@@ -1644,23 +1794,28 @@ window.editAnn = async (id) => {
     const title = document.getElementById('ann-title').value.trim();
     if (!title) { toast('Title is required', true); return; }
     const isPublished = document.getElementById('ann-published').checked;
-    const notifyFollowers = document.getElementById('ann-notify').checked;
+    const notifyFollowers = (document.getElementById('ann-notify')?.checked ?? false);
     const annBody = document.getElementById('ann-body').value.trim()||null;
-    const { error } = await sb.from('campus_announcements').update({
+    const error = await updateRow('campus_announcements', id, {
       title, body: annBody,
       is_published:     isPublished,
       notify_followers: notifyFollowers,
       updated_at:       new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
-    if (isPublished && notifyFollowers) await notifyCampusFollowers('announcements', title, annBody||'Announcement updated.');
+    });
+    if (error) { toast(error, true); return; }
     toast('Updated'); closeModal(); loadAnnouncements();
+    if (isPublished && notifyFollowers) {
+      // A first publish is announced as new; later saves (only when ticked) as an update
+      if (a.is_published) await notifyCampusFollowers('announcements', `Updated: ${title}`, annBody||'Announcement updated.', { refId: id, kind: 'update' });
+      else await notifyCampusFollowers('announcements', title, annBody||'New announcement posted.', { refId: id, kind: 'new' });
+    }
   });
 };
 
 window.deleteAnn = async (id, title) => {
   confirm_delete(title, async () => {
-    await sb.from('campus_announcements').delete().eq('id', id);
+    const error = await deleteRow('campus_announcements', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadAnnouncements();
   });
 };
@@ -1669,7 +1824,7 @@ window.deleteAnn = async (id, title) => {
 async function loadDining() {
   const { data } = await sb.from('campus_dining_updates').select('*').eq('msa_id', msaId).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(30);
   const el = document.getElementById('din-list');
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = localDateISO();
   el.innerHTML = (!data || !data.length)
     ? `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-title">No dining updates yet</div></div>`
     : data.map(d => {
@@ -1685,14 +1840,14 @@ async function loadDining() {
           </div>
           <div class="list-item-actions">
             <button class="btn btn-outline" onclick="editDining('${d.id}')">Edit</button>
-            <button class="btn btn-danger" onclick="deleteDining('${d.id}','${esc(d.dining_hall)}')">Delete</button>
+            <button class="btn btn-danger" data-label="${esc(d.dining_hall)}" onclick="deleteDining('${d.id}', this.dataset.label)">Delete</button>
           </div>
         </div>`;
       }).join('');
 }
 
 function diningForm(d = {}) {
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = localDateISO();
   return `
     <div class="form-field"><label class="form-label">Dining Hall *</label><input class="form-input" id="din-hall" value="${esc(d.dining_hall ?? '')}" placeholder="e.g. North Dining Hall" /></div>
     <div class="form-field"><label class="form-label">Date *</label><input class="form-input" id="din-date" type="date" value="${esc(d.date ?? todayISO)}" /></div>
@@ -1700,7 +1855,7 @@ function diningForm(d = {}) {
     <div class="form-field"><label class="form-label">Notes (optional)</label><input class="form-input" id="din-notes" value="${esc(d.notes ?? '')}" placeholder="Hours, station, etc." /></div>
     <div style="display:flex;gap:20px;margin-top:8px;flex-wrap:wrap;">
       <label class="form-check"><input type="checkbox" id="din-published" ${d.is_published ? 'checked' : ''}> Published</label>
-      <label class="form-check"><input type="checkbox" id="din-notify"> Notify followers</label>
+      <label class="form-check"><input type="checkbox" id="din-notify" ${d.is_published ? '' : 'checked'}> Notify followers</label>
     </div>`;
 }
 
@@ -1714,15 +1869,15 @@ document.getElementById('din-add-btn').addEventListener('click', () => {
     if (!items) { toast('Halal items are required', true); return; }
     const notes       = document.getElementById('din-notes').value.trim() || null;
     const isPublished = document.getElementById('din-published').checked;
-    const notify      = document.getElementById('din-notify').checked;
-    const { error } = await sb.from('campus_dining_updates').insert({
+    const notify      = (document.getElementById('din-notify')?.checked ?? false);
+    const { data: created, error } = await sb.from('campus_dining_updates').insert({
       msa_id: msaId, created_by: user.id,
       dining_hall: hall, date, items, notes,
-      is_published: isPublished, notify_followers: notify,
-    });
+      is_published: isPublished, notify_followers: isPublished && notify,
+    }).select('id').single();
     if (error) { toast(error.message, true); return; }
-    if (isPublished && notify) await notifyCampusFollowers('dining', `${hall} — Halal Dining`, items.substring(0, 100));
     toast('Dining update posted'); closeModal(); loadDining();
+    if (isPublished && notify) await notifyCampusFollowers('dining', `${hall} — Halal Dining`, items, { refId: created?.id, kind: 'new' });
   });
 });
 
@@ -1737,28 +1892,35 @@ window.editDining = async (id) => {
     if (!items) { toast('Halal items are required', true); return; }
     const notes       = document.getElementById('din-notes').value.trim() || null;
     const isPublished = document.getElementById('din-published').checked;
-    const notify      = document.getElementById('din-notify').checked;
-    const { error } = await sb.from('campus_dining_updates').update({
+    const notify      = (document.getElementById('din-notify')?.checked ?? false);
+    const error = await updateRow('campus_dining_updates', id, {
       dining_hall: hall, date, items, notes,
       is_published: isPublished, notify_followers: notify,
       updated_at: new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
-    if (isPublished && notify) await notifyCampusFollowers('dining', `${hall} — Halal Dining`, items.substring(0, 100));
+    });
+    if (error) { toast(error, true); return; }
     toast('Updated'); closeModal(); loadDining();
+    if (isPublished && notify) {
+      await notifyCampusFollowers('dining', d.is_published ? `Updated: ${hall} — Halal Dining` : `${hall} — Halal Dining`, items,
+        { refId: id, kind: d.is_published ? 'update' : 'new' });
+    }
   });
 };
 
 window.deleteDining = async (id, hall) => {
   confirm_delete(hall, async () => {
-    await sb.from('campus_dining_updates').delete().eq('id', id);
+    const error = await deleteRow('campus_dining_updates', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadDining();
   });
 };
 
 // ── Resources ──
+let nextResPosition = 0;
 async function loadResources() {
   const { data } = await sb.from('campus_resources').select('*').eq('msa_id', msaId).order('position');
+  // New resources go after the last one (the column defaults to 0, which would put them first)
+  nextResPosition = (data || []).reduce((max, r) => Math.max(max, r.position + 1), 0);
   const el = document.getElementById('res-list');
   el.innerHTML = (!data || !data.length)
     ? `<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">No resources yet</div></div>`
@@ -1770,7 +1932,7 @@ async function loadResources() {
           </div>
           <div class="list-item-actions">
             <button class="btn btn-outline" onclick="editRes('${r.id}')">Edit</button>
-            <button class="btn btn-danger" onclick="deleteRes('${r.id}','${esc(r.title)}')">Delete</button>
+            <button class="btn btn-danger" data-label="${esc(r.title)}" onclick="deleteRes('${r.id}', this.dataset.label)">Delete</button>
           </div>
         </div>`).join('');
 }
@@ -1799,9 +1961,10 @@ document.getElementById('res-add-btn').addEventListener('click', () => {
       msa_id: msaId, title,
       description: document.getElementById('res-desc').value.trim()||null,
       category:    document.getElementById('res-cat').value,
-      url:         document.getElementById('res-url').value.trim()||null,
+      url:         normalizeUrl(document.getElementById('res-url').value),
       address:     document.getElementById('res-address').value.trim()||null,
       is_active:   document.getElementById('res-active').checked,
+      position:    nextResPosition,
     });
     if (error) { toast(error.message, true); return; }
     toast('Resource added'); closeModal(); loadResources();
@@ -1813,22 +1976,23 @@ window.editRes = async (id) => {
   openModal('Edit Resource', resForm(r), async () => {
     const title = document.getElementById('res-title').value.trim();
     if (!title) { toast('Title is required', true); return; }
-    const { error } = await sb.from('campus_resources').update({
+    const error = await updateRow('campus_resources', id, {
       title, description: document.getElementById('res-desc').value.trim()||null,
       category: document.getElementById('res-cat').value,
-      url:      document.getElementById('res-url').value.trim()||null,
+      url:      normalizeUrl(document.getElementById('res-url').value),
       address:  document.getElementById('res-address').value.trim()||null,
       is_active: document.getElementById('res-active').checked,
       updated_at: new Date().toISOString(),
-    }).eq('id', id);
-    if (error) { toast(error.message, true); return; }
+    });
+    if (error) { toast(error, true); return; }
     toast('Updated'); closeModal(); loadResources();
   });
 };
 
 window.deleteRes = async (id, title) => {
   confirm_delete(title, async () => {
-    await sb.from('campus_resources').delete().eq('id', id);
+    const error = await deleteRow('campus_resources', id);
+    if (error) { toast(error, true); return; }
     toast('Deleted'); loadResources();
   });
 };
@@ -1861,7 +2025,14 @@ window.approveMember = async (memberId) => {
 };
 
 // ── Push notifications ──
-async function notifyCampusFollowers(category, title, body) {
+function clip(str, max) {
+  str = String(str ?? '').trim();
+  return str.length > max ? str.slice(0, max - 1) + '…' : str;
+}
+
+// Any admin or editor may send. The server caps each MSA at 5 pushes per 24 hours and
+// sends a 'new' push at most once per post (refId). kind: 'new' | 'update' | 'cancel'.
+async function notifyCampusFollowers(category, title, body, { refId = null, kind = 'new' } = {}) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
@@ -1873,13 +2044,20 @@ async function notifyCampusFollowers(category, title, body) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ msaId, category, title, body }),
+        // The function rejects titles over 100 chars and bodies over 500
+        body: JSON.stringify({ msaId, category, title: clip(title, 100), body: clip(body || title, 500), refId, kind }),
       }
     );
+    if (!res.ok) {
+      toast(`Saved, but notification failed: ${await res.text()}`, true);
+      return;
+    }
     const result = await res.json();
-    if (result.sent > 0) toast(`Notified ${result.sent} follower${result.sent !== 1 ? 's' : ''}`);
+    if (result.skipped === 'already_notified') toast('Followers were already notified about this post');
+    else if (result.sent > 0) toast(`Notified ${result.sent} follower${result.sent !== 1 ? 's' : ''}`);
   } catch (e) {
     console.error('[notifyCampusFollowers]', e);
+    toast('Saved, but notification failed', true);
   }
 }
 
