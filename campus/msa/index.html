@@ -1061,10 +1061,15 @@ async function initApp() {
 // ── Page loaders ──
 async function loadPage(name) {
   if (!msaId) {
-    // Show a nudge in the prayer-times form; other pages have their own empty states
-    if (name === 'prayer-times') {
-      document.getElementById('pt-form').innerHTML =
-        `<p style="color:var(--muted);padding:8px 0">Your account isn't on any MSA team, so there's nothing to manage here yet.</p>`;
+    // No MSA to manage (e.g. a global admin who isn't on an MSA team). Hide the page's
+    // forms and buttons so nothing can be saved without an MSA, and say why.
+    const page = document.getElementById('page-' + name);
+    if (page && !page.querySelector('.no-msa-note')) {
+      [...page.children].forEach(el => {
+        if (!el.classList.contains('page-title') && !el.classList.contains('page-sub')) el.style.display = 'none';
+      });
+      page.insertAdjacentHTML('beforeend',
+        `<p class="no-msa-note" style="color:var(--muted);padding:8px 0">Your account isn't on any MSA team, so there's nothing to manage here yet.</p>`);
     }
     return;
   }
